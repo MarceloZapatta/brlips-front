@@ -24,8 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const inAuthGroup = segments[0] === "(auth)";
 
-      console.log(isAuthed, inAuthGroup);
-
       if (isAuthed && inAuthGroup) {
         // Redirect authenticated users to home if they're on auth pages
         router.replace("/home");
