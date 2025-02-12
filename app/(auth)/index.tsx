@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -7,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import authService from "./services/auth-service";
+import authService from "../services/auth-service";
 import { useRouter } from "expo-router";
 
 interface FormState {

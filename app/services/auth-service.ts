@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import store from "../../src/store/store";
+import { useRouter } from "expo-router";
 
 // Types based on your Swagger schemas
 interface RegisterInputDto {
@@ -27,6 +28,7 @@ interface LoginResponseDto {
 
 class AuthService {
   private api: AxiosInstance;
+  private router = useRouter();
 
   constructor() {
     if (!process.env.EXPO_PUBLIC_API_URL) {
@@ -86,6 +88,9 @@ class AuthService {
         name: user.name,
         token: user.token,
       });
+
+      // Navigate to home after successful login
+      this.router.replace("/home");
 
       return response.data;
     } catch (error) {

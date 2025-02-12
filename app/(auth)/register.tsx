@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
-import authService from "./services/auth-service";
+import authService from "../services/auth-service";
 
 interface RegisterFormState {
   email: string;
