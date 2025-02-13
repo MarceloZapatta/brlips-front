@@ -1,6 +1,6 @@
-import axios, { AxiosInstance } from "axios";
+import { BaseApiService } from "./base-api-service";
 import store from "../../src/store/store";
-import { useRouter } from "expo-router";
+import { Router } from "expo-router";
 
 // Types based on your Swagger schemas
 interface RegisterInputDto {
@@ -26,42 +26,9 @@ interface LoginResponseDto {
   data: LoginOutputDto;
 }
 
-class AuthService {
-  private api: AxiosInstance;
-  private router = useRouter();
-
+class AuthService extends BaseApiService {
   constructor() {
-    if (!process.env.EXPO_PUBLIC_API_URL) {
-      console.error("EXPO_PUBLIC_API_URL not configured in .env");
-    }
-
-    this.api = axios.create({
-      baseURL: process.env.EXPO_PUBLIC_API_URL,
-      timeout: 5000,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    // Add request interceptor to include auth token
-    this.api.interceptors.request.use((config) => {
-      const token = this.getAuthToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-
-    // Add response interceptor to handle auth errors
-    this.api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401) {
-          this.logout();
-        }
-        return Promise.reject(error);
-      }
-    );
+    super();
   }
 
   async register(data: RegisterInputDto) {
@@ -74,7 +41,7 @@ class AuthService {
     }
   }
 
-  async login(credentials: LoginInputDto) {
+  async login(credentials: LoginInputDto, router: Router) {
     try {
       const response: LoginResponseDto = await this.api.post(
         "/auth/login",
@@ -91,7 +58,7 @@ class AuthService {
       });
 
       // Navigate to home after successful login
-      this.router.replace("/home");
+      router.replace("/home");
 
       return response.data;
     } catch (error) {

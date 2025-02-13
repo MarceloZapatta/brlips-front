@@ -46,12 +46,13 @@ export default function Register() {
       setError(""); // Clear any previous errors
       await authService.register(form);
       // After successful registration, automatically log in
-      await authService.login({
-        email: form.email,
-        password: form.password,
-      });
-      // Navigate back to the main screen or wherever you want
-      router.replace("/");
+      await authService.login(
+        {
+          email: form.email,
+          password: form.password,
+        },
+        router
+      );
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.detail ||

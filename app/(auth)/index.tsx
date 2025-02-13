@@ -35,10 +35,13 @@ export default function Index() {
     if (!isFormValid()) return;
     try {
       setError(""); // Clear any previous errors
-      await authService.login({
-        email: form.email,
-        password: form.password,
-      });
+      await authService.login(
+        {
+          email: form.email,
+          password: form.password,
+        },
+        router
+      );
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.detail ||
