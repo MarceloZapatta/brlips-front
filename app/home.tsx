@@ -83,6 +83,12 @@ export default function Home() {
         return;
       }
 
+      const recordingDuration = progress.value * 300000;
+      if (recordingDuration < 2000) {
+        Alert.alert("Error", "The video needs to be at least 2 seconds long");
+        return;
+      }
+
       setIsUploading(true);
       try {
         const response = await PredictionsService.predict(video.uri);
@@ -101,7 +107,6 @@ export default function Home() {
   };
 
   const handleRecordingStop = async () => {
-    progress.value = 0;
     if (isRecording && cameraRef.current) {
       try {
         await cameraRef.current.stopRecording();
@@ -114,13 +119,17 @@ export default function Home() {
     }
   };
 
-  // Modified gesture to continue recording even when moving finger
+  // Add minimum duration to the pan gesture
   const anywherePress = Gesture.Pan()
     .onBegin(() => {
-      runOnJS(handleRecordingStart)();
+      if (!isRecording) {
+        runOnJS(handleRecordingStart)();
+      }
     })
     .onFinalize(() => {
-      runOnJS(handleRecordingStop)();
+      if (isRecording) {
+        runOnJS(handleRecordingStop)();
+      }
     });
 
   if (!permission) {
@@ -129,22 +138,23 @@ export default function Home() {
   }
 
   if (!permission.granted) {
-    console.log("Requesting camera permission");
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>
-          We need your permission to show the camera
-        </Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={async () => {
-            console.log("Camera permission button pressed");
-            const result = await requestPermission();
-            console.log("Camera permission result:", result);
-          }}
-        >
-          <Text>Grant Permission</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, styles.permissionContainer]}>
+        <View style={styles.permissionContent}>
+          <Text style={styles.message}>
+            We need your permission to show the camera
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={async () => {
+              await requestPermission();
+            }}
+          >
+            <Text style={styles.permissionButtonText}>
+              Request Camera Access
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -334,5 +344,36 @@ const styles = StyleSheet.create({
   recordButtonContainer: {
     padding: 10,
     margin: -10,
+  },
+  permissionContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  permissionContent: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  permissionButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    width: "90%",
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  permissionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
