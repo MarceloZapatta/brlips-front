@@ -200,7 +200,7 @@ export default function Home() {
               disabled={isUploading}
             >
               <Ionicons
-                name="camera-outline"
+                name="videocam-outline"
                 size={32}
                 color={isRecording ? "#FF3B30" : "#007AFF"}
               />
