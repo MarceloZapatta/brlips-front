@@ -22,7 +22,6 @@ export default function History() {
   const [hasMore, setHasMore] = useState(true);
 
   const fetchPredictions = useCallback(async () => {
-    console.log("fetchPredictions");
     if (loading || !hasMore) return;
 
     try {

@@ -13,6 +13,12 @@ interface PredictionsResponse {
   next_page: number;
 }
 
+interface VideoUploadResponse {
+  id: string;
+  url: string;
+  // add other response fields as needed
+}
+
 class PredictionsService extends BaseApiService {
   constructor() {
     super();
@@ -32,6 +38,27 @@ class PredictionsService extends BaseApiService {
       return response.data;
     } catch (error) {
       console.error("Failed to fetch predictions:", error);
+      throw error;
+    }
+  }
+
+  async predict(videoUri: string): Promise<VideoUploadResponse> {
+    const formData = new FormData();
+    formData.append("video", {
+      uri: videoUri,
+      type: "video/mp4",
+      name: "recording.mp4",
+    } as any);
+
+    try {
+      const response = await this.api.post("/predictions/predict", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error uploading video:", error);
       throw error;
     }
   }
