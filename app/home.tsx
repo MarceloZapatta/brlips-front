@@ -20,6 +20,7 @@ import Animated, {
   useAnimatedProps,
   withTiming,
   useSharedValue,
+  Easing,
 } from "react-native-reanimated";
 
 export default function Home() {
@@ -62,29 +63,29 @@ export default function Home() {
     progress.value = 0;
 
     if (!isCameraReady || !cameraRef.current) {
-      console.error("Camera is not ready yet");
+      Alert.alert("Error", "Camera is not ready yet");
       return;
     }
 
     try {
       setIsRecording(true);
-      progress.value = withTiming(1, { duration: 60000 }); // Animate to 100% over 60 seconds
-      console.log("Starting recording...");
+      progress.value = withTiming(1, {
+        duration: 80000,
+        easing: Easing.linear,
+      });
       const video = await cameraRef.current.recordAsync({
         maxDuration: 60,
       });
-      console.log("Recording completed:", video);
 
       if (!video) {
-        console.error("No video data received");
+        Alert.alert("Error", "Failed to try to record video.");
+        console.error("No video data received", video);
         return;
       }
 
-      // Start upload process
       setIsUploading(true);
       try {
         const response = await PredictionsService.predict(video.uri);
-        console.log("Video uploaded successfully:", response);
         Alert.alert("Success", "Video uploaded successfully!");
       } catch (error) {
         console.error("Failed to upload video:", error);
@@ -95,7 +96,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to start recording:", error);
       setIsRecording(false);
-      progress.value = withTiming(0); // Reset progress on error
+      progress.value = withTiming(0);
     }
   };
 
@@ -104,8 +105,8 @@ export default function Home() {
     if (isRecording && cameraRef.current) {
       try {
         await cameraRef.current.stopRecording();
-        console.log("Recording stopped successfully");
       } catch (error) {
+        Alert.alert("Error", "Failed to stop recording. Please try again.");
         console.error("Failed to stop recording:", error);
       }
       setIsRecording(false);
@@ -127,51 +128,26 @@ export default function Home() {
     return <View />;
   }
 
-  // if (!permission.granted) {
-  //   console.log("Requesting camera permission");
-  //   return (
-  //     <View style={styles.container}>
-  //       <Text style={styles.message}>
-  //         We need your permission to show the camera
-  //       </Text>
-  //       <TouchableOpacity
-  //         style={styles.button}
-  //         onPress={async () => {
-  //           console.log("Camera permission button pressed");
-  //           const result = await requestPermission();
-  //           console.log("Camera permission result:", result);
-  //         }}
-  //       >
-  //         <Text>Grant Permission</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // }
-
-  // if (!mediaPermission?.granted) {
-  //   console.log("Requesting media permission");
-  //   return (
-  //     <View style={styles.container}>
-  //       <Text style={styles.message}>
-  //         We need your permission to save videos to your library
-  //       </Text>
-  //       <TouchableOpacity
-  //         style={styles.button}
-  //         onPress={async () => {
-  //           try {
-  //             console.log("Media permission button pressed");
-  //             const result = await MediaLibrary.requestPermissionsAsync();
-  //             console.log("Media permission result:", result);
-  //           } catch (error) {
-  //             console.error("Error requesting media permission:", error);
-  //           }
-  //         }}
-  //       >
-  //         <Text>Grant Permission</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // }
+  if (!permission.granted) {
+    console.log("Requesting camera permission");
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>
+          We need your permission to show the camera
+        </Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={async () => {
+            console.log("Camera permission button pressed");
+            const result = await requestPermission();
+            console.log("Camera permission result:", result);
+          }}
+        >
+          <Text>Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Loading overlay component
   const LoadingOverlay = () => (
@@ -189,10 +165,7 @@ export default function Home() {
         facing={facing}
         mode="video"
         mute
-        onCameraReady={() => {
-          console.log("Camera is ready");
-          setIsCameraReady(true);
-        }}
+        onCameraReady={() => setIsCameraReady(true)}
         onMountError={(error) => {
           console.error("Camera mount error:", error);
           setIsCameraReady(false);
@@ -201,14 +174,6 @@ export default function Home() {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
-          disabled={isUploading}
-        >
-          <Ionicons name="exit-outline" size={24} color="#FF3B30" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.debugButton}
-          onPress={() => (progress.value = withTiming(1, { duration: 60000 }))}
           disabled={isUploading}
         >
           <Ionicons name="exit-outline" size={24} color="#FF3B30" />
@@ -337,13 +302,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  debugButton: {
-    position: "absolute",
-    top: 70,
-    left: 20,
-    width: 50,
-    height: 50,
   },
   recordingButton: {
     backgroundColor: "#FF3B30",
