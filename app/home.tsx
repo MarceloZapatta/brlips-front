@@ -15,6 +15,12 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as MediaLibrary from "expo-media-library";
 import { runOnJS } from "react-native-reanimated";
 import { Alert } from "react-native";
+import Svg, { Circle, CircleProps } from "react-native-svg";
+import Animated, {
+  useAnimatedProps,
+  withTiming,
+  useSharedValue,
+} from "react-native-reanimated";
 
 export default function Home() {
   const router = useRouter();
@@ -26,6 +32,15 @@ export default function Home() {
   const cameraRef = useRef<CameraView>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const progress = useSharedValue(0);
+
+  // Add these constants
+  const CIRCLE_LENGTH = 2 * Math.PI * 40; // radius of 40 matches button radius
+  const AnimatedCircle = Animated.createAnimatedComponent<CircleProps>(Circle);
+
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: CIRCLE_LENGTH * (1 - progress.value),
+  }));
 
   useEffect(() => {
     const requestInitialPermissions = async () => {
@@ -44,6 +59,8 @@ export default function Home() {
   };
 
   const handleRecordingStart = async () => {
+    progress.value = 0;
+
     if (!isCameraReady || !cameraRef.current) {
       console.error("Camera is not ready yet");
       return;
@@ -51,6 +68,7 @@ export default function Home() {
 
     try {
       setIsRecording(true);
+      progress.value = withTiming(1, { duration: 60000 }); // Animate to 100% over 60 seconds
       console.log("Starting recording...");
       const video = await cameraRef.current.recordAsync({
         maxDuration: 60,
@@ -77,10 +95,12 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to start recording:", error);
       setIsRecording(false);
+      progress.value = withTiming(0); // Reset progress on error
     }
   };
 
   const handleRecordingStop = async () => {
+    progress.value = 0;
     if (isRecording && cameraRef.current) {
       try {
         await cameraRef.current.stopRecording();
@@ -89,6 +109,7 @@ export default function Home() {
         console.error("Failed to stop recording:", error);
       }
       setIsRecording(false);
+      progress.value = withTiming(0); // Reset progress when stopping
     }
   };
 
@@ -185,6 +206,14 @@ export default function Home() {
           <Ionicons name="exit-outline" size={24} color="#FF3B30" />
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.debugButton}
+          onPress={() => (progress.value = withTiming(1, { duration: 60000 }))}
+          disabled={isUploading}
+        >
+          <Ionicons name="exit-outline" size={24} color="#FF3B30" />
+        </TouchableOpacity>
+
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
@@ -195,16 +224,42 @@ export default function Home() {
           </TouchableOpacity>
 
           <GestureDetector gesture={anywherePress}>
-            <TouchableOpacity
-              style={[styles.button, isRecording && styles.recordingButton]}
-              disabled={isUploading}
-            >
-              <Ionicons
-                name="videocam-outline"
-                size={32}
-                color={isRecording ? "#FF3B30" : "#007AFF"}
-              />
-            </TouchableOpacity>
+            <View style={styles.recordButtonContainer}>
+              {isRecording && (
+                <Svg style={styles.progressCircle} viewBox="0 0 80 80">
+                  <Circle
+                    cx="40"
+                    cy="40"
+                    r="30"
+                    stroke="#000000"
+                    strokeWidth="4"
+                    strokeOpacity={0.3}
+                    fill="none"
+                  />
+                  <AnimatedCircle
+                    cx="40"
+                    cy="40"
+                    r="30"
+                    stroke="#FFFFFF"
+                    strokeWidth="4"
+                    strokeDasharray={`${CIRCLE_LENGTH} ${CIRCLE_LENGTH}`}
+                    animatedProps={animatedProps}
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </Svg>
+              )}
+              <TouchableOpacity
+                style={[styles.button, isRecording && styles.recordingButton]}
+                disabled={isUploading}
+              >
+                <Ionicons
+                  name="videocam-outline"
+                  size={32}
+                  color={isRecording ? "#FF3B30" : "#007AFF"}
+                />
+              </TouchableOpacity>
+            </View>
           </GestureDetector>
 
           <TouchableOpacity
@@ -283,6 +338,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  debugButton: {
+    position: "absolute",
+    top: 70,
+    left: 20,
+    width: 50,
+    height: 50,
+  },
   recordingButton: {
     backgroundColor: "#FF3B30",
   },
@@ -301,5 +363,18 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 10,
     fontSize: 16,
+  },
+  progressCircle: {
+    zIndex: 1000,
+    position: "absolute",
+    width: 100,
+    height: 100,
+    transform: [{ rotateZ: "-90deg" }],
+    left: 0,
+    top: 0,
+  },
+  recordButtonContainer: {
+    padding: 10,
+    margin: -10,
   },
 });
