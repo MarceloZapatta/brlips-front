@@ -13,10 +13,9 @@ interface PredictionsResponse {
   next_page: number;
 }
 
-interface VideoUploadResponse {
+interface PredictionResponse {
   id: string;
-  url: string;
-  // add other response fields as needed
+  text: string;
 }
 
 class PredictionsService extends BaseApiService {
@@ -42,9 +41,9 @@ class PredictionsService extends BaseApiService {
     }
   }
 
-  async predict(videoUri: string): Promise<VideoUploadResponse> {
+  async predict(videoUri: string): Promise<PredictionResponse> {
     const formData = new FormData();
-    formData.append("video", {
+    formData.append("video_file", {
       uri: videoUri,
       type: "video/mp4",
       name: "recording.mp4",

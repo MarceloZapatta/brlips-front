@@ -33,11 +33,12 @@ export default function Home() {
   const cameraRef = useRef<CameraView>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [currrentPrediction, setCurrrentPrediction] = useState("");
   const progress = useSharedValue(0);
 
   // Add these constants
   const CIRCLE_LENGTH = 2 * Math.PI * 40; // radius of 40 matches button radius
-  const AnimatedCircle = Animated.createAnimatedComponent<CircleProps>(Circle);
+  // const AnimatedCircle = Animated.createAnimatedComponent<CircleProps>(Circle);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCLE_LENGTH * (1 - progress.value),
@@ -60,6 +61,7 @@ export default function Home() {
   };
 
   const handleRecordingStart = async () => {
+    console.log("Eu cai aqui mas eai??");
     progress.value = 0;
 
     if (!isCameraReady || !cameraRef.current) {
@@ -92,7 +94,12 @@ export default function Home() {
       setIsUploading(true);
       try {
         const response = await PredictionsService.predict(video.uri);
-        Alert.alert("Success", "Video uploaded successfully!");
+
+        if (!response.text) {
+          setCurrrentPrediction("Unable to detect any speech");
+        } else {
+          setCurrrentPrediction(response.text);
+        }
       } catch (error) {
         console.error("Failed to upload video:", error);
         Alert.alert("Error", "Failed to upload video. Please try again.");
@@ -102,6 +109,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to start recording:", error);
       setIsRecording(false);
+      setIsUploading(false);
       progress.value = withTiming(0);
     }
   };
@@ -189,6 +197,12 @@ export default function Home() {
           <Ionicons name="exit-outline" size={24} color="#FF3B30" />
         </TouchableOpacity>
 
+        {currrentPrediction ? (
+          <View style={styles.predictionBanner}>
+            <Text style={styles.predictionText}>{currrentPrediction}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
@@ -200,7 +214,7 @@ export default function Home() {
 
           <GestureDetector gesture={anywherePress}>
             <View style={styles.recordButtonContainer}>
-              {isRecording && (
+              {/* {isRecording && (
                 <Svg style={styles.progressCircle} viewBox="0 0 80 80">
                   <Circle
                     cx="40"
@@ -223,7 +237,7 @@ export default function Home() {
                     fill="none"
                   />
                 </Svg>
-              )}
+              )} */}
               <TouchableOpacity
                 style={[styles.button, isRecording && styles.recordingButton]}
                 disabled={isUploading}
@@ -371,6 +385,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   permissionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  predictionBanner: {
+    position: "absolute",
+    bottom: 180, // Position it just above the button container
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  predictionText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",

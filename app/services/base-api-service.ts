@@ -11,7 +11,7 @@ export class BaseApiService {
 
     this.api = axios.create({
       baseURL: process.env.EXPO_PUBLIC_API_URL,
-      timeout: 5000,
+      timeout: 30000,
       headers: {
         "Content-Type": "application/json",
       },
@@ -51,7 +51,6 @@ export class BaseApiService {
       },
       (error) => {
         // Any status codes outside the range of 2xx trigger this function
-        console.error("Response error:", error.response?.status);
         if (error.response?.status === 401) {
           store.getActions().user.clearUser();
         }
