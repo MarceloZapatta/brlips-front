@@ -52,7 +52,8 @@ export default function History() {
     <View style={styles.predictionItem}>
       <Text style={styles.predictionText}>{item.text}</Text>
       <Text style={styles.dateText}>
-        {new Date(item.created_at).toLocaleDateString()}
+        {new Date(item.created_at).toLocaleDateString()}{" "}
+        {new Date(item.created_at).toLocaleTimeString()}
       </Text>
     </View>
   );
